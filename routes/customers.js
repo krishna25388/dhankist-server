@@ -31,24 +31,65 @@ router.get("/:id", async (req, res) => {
 });
 
 // ─── POST /api/customers ──────────────────────────────────────────────────────
+// router.post("/", async (req, res) => {
+//   try {
+//     const payload = {
+//       name:               req.body.name,
+//       initials:           req.body.initials,
+//       color:              req.body.color,
+//       phone:              req.body.phone        || "",
+//       loanAmount:         Number(req.body.loanAmount),
+//       remainingPrincipal: Number(req.body.loanAmount),
+//       interest:           Number(req.body.interest  || 5),
+//       duration:           Number(req.body.duration  || 12),
+//       startDate:          req.body.startDate,
+//       frequency:          req.body.frequency    || "monthly",
+//       paymentType:        req.body.paymentType  || "reducing_balance",
+//       status:             "Active",
+//     };
+
+//     console.log("📌 Creating customer:", payload);
+
+//     const customer = await Customer.create(payload);
+//     res.status(201).json({ success: true, data: customer });
+//   } catch (err) {
+//     console.error("❌ Create customer error:", err.message);
+//     res.status(400).json({ success: false, error: err.message });
+//   }
+// });
+
 router.post("/", async (req, res) => {
   try {
+    const loanAmount  = Number(req.body.loanAmount);
+    const interest    = Number(req.body.interest || 0);
+    const paymentType = req.body.paymentType || "fixed_emi";
+    const duration    = Number(req.body.duration || 1);
+
+    // ── Calculate correct remaining based on payment type ──
+    let remainingPrincipal;
+    if (paymentType === "fixed_emi") {
+      // For fixed EMI — remaining = total amount including interest
+      remainingPrincipal = Math.round(loanAmount * (1 + interest / 100));
+    } else {
+      // For interest_only and reducing_balance
+      // Remaining = just the principal
+      remainingPrincipal = loanAmount;
+    }
+
     const payload = {
       name:               req.body.name,
       initials:           req.body.initials,
       color:              req.body.color,
-      phone:              req.body.phone        || "",
-      loanAmount:         Number(req.body.loanAmount),
-      remainingPrincipal: Number(req.body.loanAmount),
-      interest:           Number(req.body.interest  || 5),
-      duration:           Number(req.body.duration  || 12),
+      phone:              req.body.phone     || "",
+      loanAmount,
+      remainingPrincipal,
+      interest,
+      duration,
       startDate:          req.body.startDate,
-      frequency:          req.body.frequency    || "monthly",
-      paymentType:        req.body.paymentType  || "reducing_balance",
+      frequency:          req.body.paymentType || "daily",
+      paymentType,
       status:             "Active",
     };
-
-    console.log("📌 Creating customer:", payload);
 
     const customer = await Customer.create(payload);
     res.status(201).json({ success: true, data: customer });
@@ -57,6 +98,9 @@ router.post("/", async (req, res) => {
     res.status(400).json({ success: false, error: err.message });
   }
 });
+
+
+
 // ─── PUT /api/customers/:id ───────────────────────────────────────────────────
 // Update customer
 router.put("/:id", async (req, res) => {
