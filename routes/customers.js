@@ -86,7 +86,7 @@ router.post("/", async (req, res) => {
       interest,
       duration,
       startDate:          req.body.startDate,
-      frequency:          req.body.paymentType || "daily",
+      frequency: req.body.frequency || "daily",
       paymentType,
       status:             "Active",
     };
